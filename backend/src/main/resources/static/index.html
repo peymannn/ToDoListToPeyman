@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ToDo API Test</title>
+  <style>body{font-family:Arial;margin:20px}input{margin:4px}button{margin:4px}</style>
+</head>
+<body>
+  <h2>Auth</h2>
+  <div>
+    <input id="regUser" placeholder="username">
+    <input id="regPass" placeholder="password" type="password">
+    <button id="btnRegister">Register</button>
+  </div>
+  <div>
+    <input id="loginUser" placeholder="username">
+    <input id="loginPass" placeholder="password" type="password">
+    <button id="btnLogin">Login</button>
+  </div>
+  <div id="authInfo"></div>
+
+  <h2>Topics</h2>
+  <div>
+    <input id="topicTitle" placeholder="New topic title">
+    <button id="btnCreateTopic">Create Topic</button>
+  </div>
+  <div>
+    <button id="btnLoad">Load Topics</button>
+  </div>
+  <ul id="topicsList"></ul>
+
+  <pre id="log"></pre>
+
+<script>
+const API = 'http://localhost:8080/api';
+let token = null;
+const log = (m) => { const el = document.getElementById('log'); el.textContent = m + "\n" + el.textContent };
+
+async function register(){
+  const u = document.getElementById('regUser').value;
+  const p = document.getElementById('regPass').value;
+  const res = await fetch(API + '/auth/register', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({username:u,password:p})});
+  const j = await res.json().catch(()=>null);
+  log('register: '+res.status+' '+JSON.stringify(j));
+}
+
+async function login(){
+  const u = document.getElementById('loginUser').value;
+  const p = document.getElementById('loginPass').value;
+  const res = await fetch(API + '/auth/login', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({username:u,password:p})});
+  const j = await res.json().catch(()=>null);
+  log('login: '+res.status+' '+JSON.stringify(j));
+  if (res.ok && j.token){ token = j.token; document.getElementById('authInfo').textContent = 'Token set'; }
+}
+
+async function loadTopics(){
+  const res = await fetch(API + '/topics', {headers:{'Authorization':'Bearer '+token}});
+  const j = await res.json().catch(()=>null);
+  log('list topics: '+res.status+' '+JSON.stringify(j));
+  const ul = document.getElementById('topicsList'); ul.innerHTML='';
+  if (Array.isArray(j)) j.forEach(t=>{ const li=document.createElement('li'); li.textContent = t.title; ul.appendChild(li); })
+}
+
+async function createTopic(){
+  const title = document.getElementById('topicTitle').value;
+  const res = await fetch(API + '/topics', {method:'POST', headers:{'content-type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({title})});
+  const j = await res.json().catch(()=>null);
+  log('create topic: '+res.status+' '+JSON.stringify(j));
+  if(res.ok) loadTopics();
+}
+
+document.getElementById('btnRegister').addEventListener('click', register);
+document.getElementById('btnLogin').addEventListener('click', login);
+document.getElementById('btnLoad').addEventListener('click', loadTopics);
+document.getElementById('btnCreateTopic').addEventListener('click', createTopic);
+</script>
+</body>
+</html>

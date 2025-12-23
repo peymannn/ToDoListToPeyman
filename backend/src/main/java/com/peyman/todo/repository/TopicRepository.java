@@ -1,0 +1,10 @@
+package com.peyman.todo.repository;
+
+import com.peyman.todo.model.Topic;
+import com.peyman.todo.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface TopicRepository extends JpaRepository<Topic, Long> {
+    List<Topic> findByUser(User user);
+}
